@@ -28,7 +28,7 @@ def test_parser_and_processor_normalize_items() -> None:
     assert processed.status == "OK"
 
 
-def test_debug_search_captures_request_response_and_processed_result(http_mock) -> None:
+async def test_debug_search_captures_request_response_and_processed_result(http_mock) -> None:
     http_mock.add(
         "GET",
         BASE + "/req/search",
@@ -42,7 +42,7 @@ def test_debug_search_captures_request_response_and_processed_result(http_mock) 
         },
     )
 
-    run = debug_search(
+    run = await debug_search(
         VworldClient("secret-key", retry_backoff=0),
         {"query": "판교", "type": "place", "size": 10, "page": 1},
     )
@@ -59,7 +59,7 @@ def test_debug_search_captures_request_response_and_processed_result(http_mock) 
     assert run.error is None
 
 
-def test_debug_data_feature_includes_dataset_catalog_item(http_mock) -> None:
+async def test_debug_data_feature_includes_dataset_catalog_item(http_mock) -> None:
     http_mock.add(
         "GET",
         BASE + "/req/data",
@@ -74,7 +74,7 @@ def test_debug_data_feature_includes_dataset_catalog_item(http_mock) -> None:
     )
 
     client = VworldClient("secret-key", retry_backoff=0)
-    debug_run = debug_get_data_feature(client, {"data": "LT_C_ADEMD_INFO"})
+    debug_run = await debug_get_data_feature(client, {"data": "LT_C_ADEMD_INFO"})
 
     assert debug_run.catalog is not None
     assert debug_run.catalog.function == "get_data_feature"
@@ -82,11 +82,11 @@ def test_debug_data_feature_includes_dataset_catalog_item(http_mock) -> None:
     assert debug_run.data_service.name == "읍면동"
 
 
-def test_debug_search_returns_error_when_auth_is_missing(monkeypatch) -> None:
+async def test_debug_search_returns_error_when_auth_is_missing(monkeypatch) -> None:
     monkeypatch.delenv("VWORLD_API_KEY", raising=False)
     monkeypatch.delenv("VWORLD_KEY", raising=False)
 
-    run = debug_search(VworldClient(api_key=None), {"query": "판교", "type": "place"})
+    run = await debug_search(VworldClient(api_key=None), {"query": "판교", "type": "place"})
 
     assert run.error is not None
     assert run.error["type"] == "VworldAuthError"
@@ -94,7 +94,7 @@ def test_debug_search_returns_error_when_auth_is_missing(monkeypatch) -> None:
     assert run.response == {}
 
 
-def test_debug_search_keeps_vworld_error_body_for_fixture_review(http_mock) -> None:
+async def test_debug_search_keeps_vworld_error_body_for_fixture_review(http_mock) -> None:
     http_mock.add(
         "GET",
         BASE + "/req/search",
@@ -106,7 +106,7 @@ def test_debug_search_keeps_vworld_error_body_for_fixture_review(http_mock) -> N
         },
     )
 
-    run = debug_search(
+    run = await debug_search(
         VworldClient("secret-key", retry_backoff=0),
         {"query": "판교", "type": "place"},
     )

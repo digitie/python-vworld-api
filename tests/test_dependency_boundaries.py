@@ -21,8 +21,7 @@ def test_package_import_does_not_load_kraddr_base() -> None:
 
 def test_source_does_not_expose_kraddr_base_types() -> None:
     source_text = "\n".join(
-        path.read_text(encoding="utf-8")
-        for path in (PROJECT_ROOT / "src" / "vworld").rglob("*.py")
+        path.read_text(encoding="utf-8") for path in (PROJECT_ROOT / "src" / "vworld").rglob("*.py")
     )
 
     assert "python-kraddr-base" not in source_text

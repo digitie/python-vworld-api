@@ -28,7 +28,7 @@ Public wrapper는 원래 문자열 값과 이 패키지가 제공하는 typed he
 
 ## HTTP runtime
 
-Transport layer는 `httpx`를 사용한다. `VworldClient`는 기존 synchronous API surface를 유지하고, `AsyncVworldClient`는 REST, OGC text/binary response, image response, tile fetch helper를 asyncio-friendly call로 제공한다. 두 client는 `_http.py`의 status와 VWorld body error mapping을 공유한다.
+HTTP 계층은 `httpx.AsyncClient`를 사용한다. `VworldClient` 하나로 REST, OGC, 이미지, 타일과 페이지 순회를 비동기로 제공한다. 각 요청·재시도·리다이렉트는 공통 AsyncTokenBucket을 거치며 오류 매핑은 `_http.py`에서 수행한다. URL 빌더와 순수 파싱·메타데이터 함수는 일반 함수다.
 
 ## General-purpose helper
 

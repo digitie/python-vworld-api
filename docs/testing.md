@@ -19,7 +19,7 @@ python -m mypy src/vworld
 
 - Parameter test는 bool conversion, CSV join, bbox/point formatting, invalid size를 다룬다.
 - HTTP test는 key injection, JSON parsing, VWorld error code mapping, `NOT_FOUND`, binary JSON error payload, retry, network timeout을 다룬다.
-- Async client test는 `AsyncVworldClient`, `VworldClient.aio()` factory, blank-domain preservation을 다룬다.
+- 비동기 테스트는 `VworldClient`의 async 문맥 종료와 명시적 빈 domain 보존을 다룬다.
 - REST client test는 `version=2.0`과 endpoint별 required parameter를 assert한다.
 - OGC test는 WMS/WFS uppercase parameter name과 response wrapper를 assert한다.
 - Image/tile test는 StaticMap, legend, WMTS, TMS URL shape를 assert한다.

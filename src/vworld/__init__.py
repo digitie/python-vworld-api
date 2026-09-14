@@ -1,5 +1,6 @@
 """Python client for VWorld HTTP APIs."""
 
+from ._ratelimit import AsyncTokenBucket
 from .catalog import (
     API_CATALOG,
     API_CATALOG_BY_FUNCTION,
@@ -14,7 +15,7 @@ from .catalog import (
     get_data_service,
     list_api_catalog,
 )
-from .client import AsyncVworldClient, VworldClient
+from .client import VworldClient
 from .debug import (
     DEBUG_FUNCTION_LABELS,
     DebugRun,
@@ -103,7 +104,7 @@ __all__ = [
     "AddressType",
     "ApiCatalogEntry",
     "ApiParameter",
-    "AsyncVworldClient",
+    "AsyncTokenBucket",
     "BBox",
     "BBoxLike",
     "BinaryResponse",

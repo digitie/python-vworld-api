@@ -103,13 +103,13 @@ def _patch_default_httpx_clients(
 
     import vworld._http as http_module
 
-    monkeypatch.setattr(http_module, "_new_client", http_mock.client)
     monkeypatch.setattr(http_module, "_new_async_client", http_mock.async_client)
 
 
 @pytest.fixture
-def client(http_mock: HttpxMock) -> VworldClient:
-    return VworldClient("test-key", retry_backoff=0, session=http_mock.client())
+async def client(http_mock: HttpxMock):
+    async with VworldClient("test-key", retry_backoff=0, max_rps=10000) as instance:
+        yield instance
 
 
 @pytest.fixture
