@@ -36,16 +36,18 @@ def test_response_models_are_public_imports():
     assert TextResponse(text="<ok/>").model_dump_json() == '{"text":"<ok/>","content_type":null}'
 
 
-def test_search_accepts_enums_and_bbox_model(http_mock):
+async def test_search_accepts_enums_and_bbox_model(http_mock):
     http_mock.add("GET", BASE + "/req/search", json={"response": {"status": "OK"}})
     client = VworldClient("test-key", retry_backoff=0)
 
-    client.search(
-        "pangyo",
-        SearchType.ADDRESS,
-        category=AddressCategory.PARCEL,
-        bbox=BBox.from_latlon(south=37.4, west=126.9, north=37.6, east=127.1),
-        crs=Crs.WGS84,
+    (
+        await client.search(
+            "pangyo",
+            SearchType.ADDRESS,
+            category=AddressCategory.PARCEL,
+            bbox=BBox.from_latlon(south=37.4, west=126.9, north=37.6, east=127.1),
+            crs=Crs.WGS84,
+        )
     )
 
     query = _query(http_mock.calls[0])
@@ -55,15 +57,19 @@ def test_search_accepts_enums_and_bbox_model(http_mock):
     assert query["crs"] == ["EPSG:4326"]
 
 
-def test_geocoder_accepts_enums_and_latlon_helpers(http_mock):
+async def test_geocoder_accepts_enums_and_latlon_helpers(http_mock):
     http_mock.add("GET", BASE + "/req/address", json={"response": {"status": "OK"}})
     http_mock.add("GET", BASE + "/req/address", json={"response": {"status": "OK"}})
     http_mock.add("GET", BASE + "/req/address", json={"response": {"status": "OK"}})
     client = VworldClient("test-key", retry_backoff=0)
 
-    client.geocode("pangyo-ro 242", type=AddressType.ROAD)
-    client.reverse_geocode(latlon(37.402352535, 127.101313354), type=ReverseGeocodeType.ROAD)
-    client.reverse_geocode_latlon(37.402352535, 127.101313354)
+    (await client.geocode("pangyo-ro 242", type=AddressType.ROAD))
+    (
+        await client.reverse_geocode(
+            latlon(37.402352535, 127.101313354), type=ReverseGeocodeType.ROAD
+        )
+    )
+    (await client.reverse_geocode_latlon(37.402352535, 127.101313354))
 
     assert _query(http_mock.calls[0])["type"] == ["road"]
     assert _query(http_mock.calls[1])["point"] == ["127.101313354,37.402352535"]
@@ -71,20 +77,20 @@ def test_geocoder_accepts_enums_and_latlon_helpers(http_mock):
     assert _query(http_mock.calls[2])["point"] == ["127.101313354,37.402352535"]
 
 
-def test_search_district_accepts_enum_category(http_mock):
+async def test_search_district_accepts_enum_category(http_mock):
     http_mock.add("GET", BASE + "/req/search", json={"response": {"status": "OK"}})
     client = VworldClient("test-key", retry_backoff=0)
 
-    client.search_district("pangyo", category=DistrictCategory.LEVEL3)
+    (await client.search_district("pangyo", category=DistrictCategory.LEVEL3))
 
     assert _query(http_mock.calls[0])["category"] == ["L3"]
 
 
-def test_legend_and_static_map_accept_enums_and_latlon(http_mock):
+async def test_legend_and_static_map_accept_enums_and_latlon(http_mock):
     http_mock.add("GET", BASE + "/req/image", body=b"legend", content_type="image/png")
     client = VworldClient("test-key", retry_backoff=0)
 
-    client.get_legend_style("lt_c_uq111", type=LegendType.SUB, format=ImageFormat.BMP)
+    (await client.get_legend_style("lt_c_uq111", type=LegendType.SUB, format=ImageFormat.BMP))
     url = client.static_map_url(
         center=latlon(37.566643, 126.978271),
         zoom=16,

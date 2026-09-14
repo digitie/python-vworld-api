@@ -1,5 +1,9 @@
 # Architecture Decision Records (ADR)
 
+## ADR — native async 단일 클라이언트와 공유 버킷
+
+사용자 요청에 따라 동기/비동기 이중 구현을 제거했다. 파라미터 조립은 기존 공유 함수를 보존한다. 표준 라이브러리 AsyncTokenBucket으로 라이브러리별 동일 동작을 유지하고 주입된 버킷으로 여러 클라이언트 TPS를 합산한다. 디버그 세션 교체는 동시 호출과 리다이렉트 제어를 깨므로 ContextVar 수집으로 바꿨다.
+
 ## ADR-001: Sync/Async param 공유 방식
 
 - **상태**: 채택

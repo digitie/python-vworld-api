@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import sys
 from importlib import metadata
@@ -177,7 +178,12 @@ def _raw_response_tab(
             st.error("필수 파라미터를 입력하세요: " + ", ".join(missing))
         else:
             with st.spinner("VWorld API 호출 중..."):
-                debug_run = run_debug_function(client, entry.function, current_input)
+
+                async def invoke() -> DebugRun:
+                    async with client:
+                        return await run_debug_function(client, entry.function, current_input)
+
+                debug_run = asyncio.run(invoke())
             st.session_state["last_run"] = debug_run
             append_history(DATA_DIR / "history", debug_run)
 

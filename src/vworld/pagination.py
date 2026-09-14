@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from typing import Any, TypeVar
 
@@ -95,13 +95,13 @@ def response_items(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
     return _normalize_items(result.get("items"), "response.result.items")
 
 
-def iter_pages(
-    fetch_page: Callable[[int], TPage],
+async def iter_pages(
+    fetch_page: Callable[[int], Awaitable[TPage]],
     *,
     start_page: int = 1,
     max_pages: int = 100,
     max_items: int | None = None,
-) -> Iterator[TPage]:
+) -> AsyncIterator[TPage]:
     """``response.page`` 메타데이터를 따라 VWorld 페이지를 순회합니다.
 
     상위 API가 일관되지 않은 페이지 메타데이터를 반환할 때 무한 루프에
@@ -119,7 +119,7 @@ def iter_pages(
     pages_seen = 0
     items_seen = 0
     while pages_seen < max_pages:
-        payload = fetch_page(page_no)
+        payload = await fetch_page(page_no)
         yield payload
 
         pages_seen += 1

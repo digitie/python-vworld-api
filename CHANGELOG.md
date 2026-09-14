@@ -1,5 +1,9 @@
 # 변경 기록
 
+## 미출시 — 호환성 변경
+
+동기 VworldClient와 Async 접두사 클라이언트를 native async VworldClient 하나로 통합했다. 호출은 await, 페이지는 async for, 종료는 async with/aclose를 사용한다. max_rps/rate_limiter와 공통 AsyncTokenBucket을 공개한다. debug/UI·예제를 전환하고 동시 응답 수집과 주입 세션 수명을 보장한다.
+
 ## 0.1.0
 
 - 초기 `python-vworld-api` package 추가.

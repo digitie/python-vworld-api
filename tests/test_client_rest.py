@@ -14,15 +14,17 @@ def _query(call) -> dict[str, list[str]]:
     return parse_qs(urlparse(str(call.request.url)).query, keep_blank_values=True)
 
 
-def test_search_place_query_params(client, ok_payload, http_mock):
+async def test_search_place_query_params(client, ok_payload, http_mock):
     http_mock.add("GET", BASE + "/req/search", json=ok_payload)
 
-    client.search_place(
-        "공간정보산업진흥원",
-        size=20,
-        page=2,
-        bbox=(14140071.146077, 4494339.6527027, 14160071.146077, 4496339.6527027),
-        crs="EPSG:900913",
+    (
+        await client.search_place(
+            "공간정보산업진흥원",
+            size=20,
+            page=2,
+            bbox=(14140071.146077, 4494339.6527027, 14160071.146077, 4496339.6527027),
+            crs="EPSG:900913",
+        )
     )
 
     query = _query(http_mock.calls[0])
@@ -37,32 +39,32 @@ def test_search_place_query_params(client, ok_payload, http_mock):
     assert "1.0" not in str(http_mock.calls[0].request.url)
 
 
-def test_search_requires_category_for_address_and_district(client):
+async def test_search_requires_category_for_address_and_district(client):
     with pytest.raises(VworldInvalidParameterError):
-        client.search("판교로 242", "address", category=None)
+        (await client.search("판교로 242", "address", category=None))
 
     with pytest.raises(VworldInvalidParameterError):
-        client.search("삼평동", "district", category=None)
+        (await client.search("삼평동", "district", category=None))
 
 
-def test_search_more_helpers_and_validation(client, monkeypatch):
+async def test_search_more_helpers_and_validation(client, monkeypatch):
     monkeypatch.setenv("VWORLD_API_KEY", " env-\nkey\t")
     assert VworldClient.from_env().api_key == "env-key"
 
     with pytest.raises(VworldInvalidParameterError):
-        client.search("", "place")
+        (await client.search("", "place"))
     with pytest.raises(VworldInvalidParameterError):
-        client.search("판교", "unknown")
+        (await client.search("판교", "unknown"))
     with pytest.raises(VworldInvalidParameterError):
-        client.geocode("", type="road")
+        (await client.geocode("", type="road"))
     with pytest.raises(VworldInvalidParameterError):
-        client.geocode("판교로 242", type="both")
+        (await client.geocode("판교로 242", type="both"))
     with pytest.raises(VworldInvalidParameterError):
-        client.reverse_geocode((127, 37), type="unknown")
+        (await client.reverse_geocode((127, 37), type="unknown"))
     with pytest.raises(VworldInvalidParameterError):
-        client.get_data_feature("")
+        (await client.get_data_feature(""))
     with pytest.raises(VworldInvalidParameterError):
-        client.get_data_feature_type("")
+        (await client.get_data_feature_type(""))
 
 
 def test_from_env_file_loads_key_and_domain(tmp_path):
@@ -78,11 +80,11 @@ def test_from_env_file_loads_key_and_domain(tmp_path):
     assert client.domain == "example.com"
 
 
-def test_pasted_api_key_whitespace_is_removed(ok_payload, http_mock):
+async def test_pasted_api_key_whitespace_is_removed(ok_payload, http_mock):
     http_mock.add("GET", BASE + "/req/search", json=ok_payload)
 
     client = VworldClient(" test-\nkey\t", retry_backoff=0)
-    client.search_place("판교")
+    (await client.search_place("판교"))
 
     query = _query(http_mock.calls[0])
     assert client.api_key == "test-key"
@@ -97,30 +99,30 @@ def test_explicit_blank_domain_is_preserved(monkeypatch):
     assert client.domain == ""
 
 
-def test_blank_client_domain_suppresses_env_domain(monkeypatch, ok_payload, http_mock):
+async def test_blank_client_domain_suppresses_env_domain(monkeypatch, ok_payload, http_mock):
     monkeypatch.setenv("VWORLD_DOMAIN", "example.com")
     http_mock.add("GET", BASE + "/req/data", json=ok_payload)
 
     client = VworldClient("test-key", domain="")
-    client.get_data_feature("LT_C_ADEMD_INFO")
+    (await client.get_data_feature("LT_C_ADEMD_INFO"))
 
     assert "domain" not in _query(http_mock.calls[0])
 
 
-def test_search_address_helper_adds_default_category(client, ok_payload, http_mock):
+async def test_search_address_helper_adds_default_category(client, ok_payload, http_mock):
     http_mock.add("GET", BASE + "/req/search", json=ok_payload)
 
-    client.search_address("성남시 분당구 판교로 242")
+    (await client.search_address("성남시 분당구 판교로 242"))
 
     query = _query(http_mock.calls[0])
     assert query["type"] == ["address"]
     assert query["category"] == ["road"]
 
 
-def test_geocode_query_params(client, ok_payload, http_mock):
+async def test_geocode_query_params(client, ok_payload, http_mock):
     http_mock.add("GET", BASE + "/req/address", json=ok_payload)
 
-    client.geocode("판교로 242", type="road", refine=False, simple=True)
+    (await client.geocode("판교로 242", type="road", refine=False, simple=True))
 
     query = _query(http_mock.calls[0])
     assert query["service"] == ["address"]
@@ -132,10 +134,10 @@ def test_geocode_query_params(client, ok_payload, http_mock):
     assert query["simple"] == ["true"]
 
 
-def test_reverse_geocode_query_params(client, ok_payload, http_mock):
+async def test_reverse_geocode_query_params(client, ok_payload, http_mock):
     http_mock.add("GET", BASE + "/req/address", json=ok_payload)
 
-    client.reverse_geocode((127.101313354, 37.402352535), type="both", zipcode=False)
+    (await client.reverse_geocode((127.101313354, 37.402352535), type="both", zipcode=False))
 
     query = _query(http_mock.calls[0])
     assert query["request"] == ["getaddress"]
@@ -144,17 +146,19 @@ def test_reverse_geocode_query_params(client, ok_payload, http_mock):
     assert query["zipcode"] == ["false"]
 
 
-def test_data_feature_query_params_and_domain(client, ok_payload, http_mock):
+async def test_data_feature_query_params_and_domain(client, ok_payload, http_mock):
     http_mock.add("GET", BASE + "/req/data", json=ok_payload)
 
-    client.get_data_feature(
-        "LT_C_ADEMD_INFO",
-        attr_filter=["emd_cd:=:11650108", "emd_kor_nm:like:서초"],
-        columns=["emd_cd", "full_nm"],
-        geometry=False,
-        attribute=True,
-        buffer=10,
-        domain="example.com",
+    (
+        await client.get_data_feature(
+            "LT_C_ADEMD_INFO",
+            attr_filter=["emd_cd:=:11650108", "emd_kor_nm:like:서초"],
+            columns=["emd_cd", "full_nm"],
+            geometry=False,
+            attribute=True,
+            buffer=10,
+            domain="example.com",
+        )
     )
 
     query = _query(http_mock.calls[0])
@@ -169,44 +173,44 @@ def test_data_feature_query_params_and_domain(client, ok_payload, http_mock):
     assert query["domain"] == ["example.com"]
 
 
-def test_data_feature_accepts_explicit_blank_domain(client, ok_payload, http_mock):
+async def test_data_feature_accepts_explicit_blank_domain(client, ok_payload, http_mock):
     http_mock.add("GET", BASE + "/req/data", json=ok_payload)
 
-    client.get_data_feature("LT_C_ADEMD_INFO", domain="")
+    (await client.get_data_feature("LT_C_ADEMD_INFO", domain=""))
 
     assert _query(http_mock.calls[0])["domain"] == [""]
 
 
-def test_data_feature_type_query_params(client, ok_payload, http_mock):
+async def test_data_feature_type_query_params(client, ok_payload, http_mock):
     http_mock.add("GET", BASE + "/req/data", json=ok_payload)
 
-    client.get_data_feature_type("LT_C_ADEMD_INFO")
+    (await client.get_data_feature_type("LT_C_ADEMD_INFO"))
 
     query = _query(http_mock.calls[0])
     assert query["request"] == ["GetFeatureType"]
     assert query["version"] == ["2.0"]
 
 
-def test_missing_key_raises_before_network(monkeypatch):
+async def test_missing_key_raises_before_network(monkeypatch):
     monkeypatch.delenv("VWORLD_API_KEY", raising=False)
     monkeypatch.delenv("VWORLD_KEY", raising=False)
     with pytest.raises(VworldAuthError):
-        VworldClient(api_key=None).search_place("판교")
+        (await VworldClient(api_key=None).search_place("판교"))
 
 
-def test_search_district_and_road_helpers(client, ok_payload, http_mock):
+async def test_search_district_and_road_helpers(client, ok_payload, http_mock):
     http_mock.add("GET", BASE + "/req/search", json=ok_payload)
     http_mock.add("GET", BASE + "/req/search", json=ok_payload)
 
-    client.search_district("삼평동")
-    client.search_road("판교로")
+    (await client.search_district("삼평동"))
+    (await client.search_road("판교로"))
 
     assert _query(http_mock.calls[0])["type"] == ["district"]
     assert _query(http_mock.calls[0])["category"] == ["L4"]
     assert _query(http_mock.calls[1])["type"] == ["road"]
 
 
-def test_iter_search_items_follows_pages_and_caps_items(client, http_mock):
+async def test_iter_search_items_follows_pages_and_caps_items(client, http_mock):
     http_mock.add(
         "GET",
         BASE + "/req/search",
@@ -232,14 +236,14 @@ def test_iter_search_items_follows_pages_and_caps_items(client, http_mock):
         },
     )
 
-    items = list(client.iter_search_items("판교", "place", size=2, max_items=3))
+    items = [item async for item in client.iter_search_items("판교", "place", size=2, max_items=3)]
 
     assert [item["id"] for item in items] == ["1", "2", "3"]
     assert _query(http_mock.calls[0])["page"] == ["1"]
     assert _query(http_mock.calls[1])["page"] == ["2"]
 
 
-def test_iter_data_feature_pages_preserves_request_params(client, http_mock):
+async def test_iter_data_feature_pages_preserves_request_params(client, http_mock):
     http_mock.add(
         "GET",
         BASE + "/req/data",
@@ -253,8 +257,9 @@ def test_iter_data_feature_pages_preserves_request_params(client, http_mock):
         },
     )
 
-    pages = list(
-        client.iter_data_feature_pages(
+    pages = [
+        item
+        async for item in client.iter_data_feature_pages(
             "LT_C_ADEMD_INFO",
             attr_filter=["emd_cd:=:11650108"],
             columns=["emd_cd"],
@@ -263,7 +268,7 @@ def test_iter_data_feature_pages_preserves_request_params(client, http_mock):
             start_page=3,
             domain="",
         )
-    )
+    ]
 
     assert pages[0]["response"]["status"] == "OK"
     query = _query(http_mock.calls[0])
@@ -275,7 +280,7 @@ def test_iter_data_feature_pages_preserves_request_params(client, http_mock):
     assert query["domain"] == [""]
 
 
-def test_iter_data_feature_items_follows_pages_and_caps_items(client, http_mock):
+async def test_iter_data_feature_items_follows_pages_and_caps_items(client, http_mock):
     http_mock.add(
         "GET",
         BASE + "/req/data",
@@ -301,20 +306,21 @@ def test_iter_data_feature_items_follows_pages_and_caps_items(client, http_mock)
         },
     )
 
-    items = list(
-        client.iter_data_feature_items("LT_C_ADEMD_INFO", size=2, max_items=3)
-    )
+    items = [
+        item
+        async for item in client.iter_data_feature_items("LT_C_ADEMD_INFO", size=2, max_items=3)
+    ]
 
     assert [item["id"] for item in items] == ["1", "2", "3"]
     assert _query(http_mock.calls[0])["page"] == ["1"]
     assert _query(http_mock.calls[1])["page"] == ["2"]
 
 
-def test_client_close_and_context_manager(ok_payload, http_mock):
+async def test_client_close_and_context_manager(ok_payload, http_mock):
     http_mock.add("GET", BASE + "/req/search", json=ok_payload)
 
-    with VworldClient("test-key", retry_backoff=0) as c:
-        c.search_place("판교")
+    async with VworldClient("test-key", retry_backoff=0) as c:
+        (await c.search_place("판교"))
 
     # After exiting the context manager, the client should still be usable
     # for attribute access (close doesn't nullify the http object).
@@ -322,4 +328,4 @@ def test_client_close_and_context_manager(ok_payload, http_mock):
 
     # Explicitly test close() on a standalone client
     standalone = VworldClient("test-key", retry_backoff=0)
-    standalone.close()  # should not raise
+    await standalone.aclose()

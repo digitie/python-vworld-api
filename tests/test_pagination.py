@@ -55,14 +55,14 @@ def test_response_items_accepts_json_list_and_xml_shaped_item_root() -> None:
     assert response_items(_payload(items={"item": [{"id": "nested"}]})) == [{"id": "nested"}]
 
 
-def test_iter_pages_follows_response_page_with_item_guard() -> None:
+async def test_iter_pages_follows_response_page_with_item_guard() -> None:
     calls: list[int] = []
 
-    def fetch(page_no: int) -> dict[str, object]:
+    async def fetch(page_no: int) -> dict[str, object]:
         calls.append(page_no)
         return _payload(page=page_no, total_pages=3, record_current=2)
 
-    pages = list(iter_pages(fetch, max_items=3))
+    pages = [item async for item in iter_pages(fetch, max_items=3)]
 
     assert calls == [1, 2]
     assert len(pages) == 2
@@ -76,9 +76,9 @@ def test_iter_pages_follows_response_page_with_item_guard() -> None:
         {"max_items": 0},
     ],
 )
-def test_iter_pages_rejects_bad_guards(kwargs: dict[str, int]) -> None:
+async def test_iter_pages_rejects_bad_guards(kwargs: dict[str, int]) -> None:
     with pytest.raises(VworldInvalidParameterError):
-        list(iter_pages(lambda page: _payload(page=page), **kwargs))
+        [item async for item in iter_pages(lambda page: _payload(page=page), **kwargs)]
 
 
 @pytest.mark.parametrize(

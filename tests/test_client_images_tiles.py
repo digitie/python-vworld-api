@@ -14,10 +14,10 @@ def _query(call) -> dict[str, list[str]]:
     return parse_qs(urlparse(str(call.request.url)).query)
 
 
-def test_legend_graphic_params(client, http_mock):
+async def test_legend_graphic_params(client, http_mock):
     http_mock.add("GET", BASE + "/req/image", body=b"legend", content_type="image/png")
 
-    response = client.get_legend_graphic("lt_c_uq111", style="lt_c_uq111", type="layer")
+    response = await client.get_legend_graphic("lt_c_uq111", style="lt_c_uq111", type="layer")
 
     assert response.content == b"legend"
     query = _query(http_mock.calls[0])
@@ -29,10 +29,10 @@ def test_legend_graphic_params(client, http_mock):
     assert query["type"] == ["LAYER"]
 
 
-def test_static_map_params_repeat_marker_and_route(client, http_mock):
+async def test_static_map_params_repeat_marker_and_route(client, http_mock):
     http_mock.add("GET", BASE + "/req/image", body=b"map", content_type="image/png")
 
-    response = client.static_map(
+    response = await client.static_map(
         center=(126.978271, 37.566643),
         zoom=16,
         size=(400, 400),
@@ -91,27 +91,27 @@ def test_theme_tile_urls_allow_png_for_satellite_themes(client):
     )
 
 
-def test_fetch_tiles_do_not_add_query_key(client, http_mock):
+async def test_fetch_tiles_do_not_add_query_key(client, http_mock):
     url = "https://api.vworld.kr/req/wmts/1.0.0/test-key/Base/11/793/1746.png"
     http_mock.add("GET", url, body=b"tile", content_type="image/png")
 
-    response = client.get_wmts_tile("Base", 11, 793, 1746)
+    response = await client.get_wmts_tile("Base", 11, 793, 1746)
 
     assert response.content == b"tile"
     assert str(http_mock.calls[0].request.url) == url
 
 
-def test_fetch_tms_resource_text(client, http_mock):
+async def test_fetch_tms_resource_text(client, http_mock):
     url = "https://api.vworld.kr/req/tms/1.0.0/test-key"
     http_mock.add("GET", url, body="<TileMapService/>", content_type="text/xml")
 
-    response = client.get_tms_resource()
+    response = await client.get_tms_resource()
 
     assert response.text == "<TileMapService/>"
     assert str(http_mock.calls[0].request.url) == url
 
 
-def test_fetch_more_tile_and_text_helpers(client, http_mock):
+async def test_fetch_more_tile_and_text_helpers(client, http_mock):
     urls = [
         "https://api.vworld.kr/req/wmts/1.0.0/test-key/WMTSCapabilities.xml",
         "https://api.vworld.kr/req/wmts/1.0.0/test-key/Satellite/themes/cities/2025/Oslo/11/1086/596.png",
@@ -122,10 +122,14 @@ def test_fetch_more_tile_and_text_helpers(client, http_mock):
     for url in urls[1:]:
         http_mock.add("GET", url, body=b"tile", content_type="image/png")
 
-    assert client.get_wmts_capabilities().text == "<Capabilities/>"
-    assert client.get_wmts_theme_tile("cities", 2025, "Oslo", 11, 1086, 596).content == b"tile"
-    assert client.get_tms_tile("Base", 11, 793, 1746).content == b"tile"
-    assert client.get_tms_theme_tile("cities", 2025, "Oslo", 11, 1086, 596).content == b"tile"
+    assert (await client.get_wmts_capabilities()).text == "<Capabilities/>"
+    assert (
+        await client.get_wmts_theme_tile("cities", 2025, "Oslo", 11, 1086, 596)
+    ).content == b"tile"
+    assert (await client.get_tms_tile("Base", 11, 793, 1746)).content == b"tile"
+    assert (
+        await client.get_tms_theme_tile("cities", 2025, "Oslo", 11, 1086, 596)
+    ).content == b"tile"
 
 
 @pytest.mark.parametrize(

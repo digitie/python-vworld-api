@@ -1,5 +1,9 @@
 # 현재 진척도
 
+## 2026-09-14 현재 작업
+
+async-only·공통 TPS 구현 및 오프라인 검증 완료. 독립 리뷰 2인, live E2E와 PR 머지 결과는 docs/verification-async-tps.md에서 이어 기록한다.
+
 > 에이전트가 작업을 시작할 때 이 문서를 먼저 읽어 현재 상태를 파악한다.
 
 ## 마지막 갱신
@@ -12,7 +16,7 @@
 - [x] OGC API 래퍼 (WMS GetCapabilities/GetMap/GetFeatureInfo, WFS GetCapabilities/DescribeFeatureType/GetFeature)
 - [x] Legend, StaticMap Image API 2.0
 - [x] WMTS/TMS 타일 엔드포인트
-- [x] AsyncVworldClient (httpx 비동기)
+- [x] VworldClient 하나로 통합한 native async HTTP 및 공통 TPS
 - [x] 공식 2D Data 카탈로그 158개 service ID
 - [x] Pydantic v2 공개 모델
 - [x] 페이지네이션 헬퍼 (iter_pages, iter_items)

@@ -24,16 +24,16 @@ _OK_RESPONSE = {
 }
 
 
-def test_run_debug_function_unknown_raises_value_error(client):
+async def test_run_debug_function_unknown_raises_value_error(client):
     with pytest.raises(ValueError, match="Unknown debug function"):
-        run_debug_function(client, "no_such_function", {})
+        (await run_debug_function(client, "no_such_function", {}))
 
 
-def test_debug_search_with_valid_mock_data(http_mock):
+async def test_debug_search_with_valid_mock_data(http_mock):
     http_mock.add("GET", BASE + "/req/search", json=_OK_RESPONSE)
 
     client = VworldClient("test-key", retry_backoff=0)
-    run = debug_search(client, {"query": "판교", "type": "place"})
+    run = await debug_search(client, {"query": "판교", "type": "place"})
 
     assert run.function == "search"
     assert run.input["query"] == "판교"
@@ -43,11 +43,11 @@ def test_debug_search_with_valid_mock_data(http_mock):
     assert len(run.trace) >= 2
 
 
-def test_debug_geocode_with_valid_mock_data(http_mock):
+async def test_debug_geocode_with_valid_mock_data(http_mock):
     http_mock.add("GET", BASE + "/req/address", json=_OK_RESPONSE)
 
     client = VworldClient("test-key", retry_backoff=0)
-    run = debug_geocode(client, {"address": "판교로 242"})
+    run = await debug_geocode(client, {"address": "판교로 242"})
 
     assert run.function == "geocode"
     assert run.error is None
@@ -55,13 +55,11 @@ def test_debug_geocode_with_valid_mock_data(http_mock):
     assert run.processed is not None
 
 
-def test_debug_reverse_geocode_with_valid_mock_data(http_mock):
+async def test_debug_reverse_geocode_with_valid_mock_data(http_mock):
     http_mock.add("GET", BASE + "/req/address", json=_OK_RESPONSE)
 
     client = VworldClient("test-key", retry_backoff=0)
-    run = debug_reverse_geocode(
-        client, {"point": "127.101313354,37.402352535"}
-    )
+    run = await debug_reverse_geocode(client, {"point": "127.101313354,37.402352535"})
 
     assert run.function == "reverse_geocode"
     assert run.error is None
